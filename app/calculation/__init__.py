@@ -250,7 +250,7 @@ class DivideCalculation(Calculation):
 @CalculationFactory.register_calculation('power')
 class PowerCalculation(Calculation):
     """
-    MultiplyCalculation represents a multiplication operation.
+    PowerCalculation represents a multiplication operation.
     
     By encapsulating the multiplication logic here, we achieve a clear separation of 
     concerns, making it easy to adjust the multiplication logic without affecting other calculations.
@@ -259,3 +259,16 @@ class PowerCalculation(Calculation):
     def execute(self) -> float:
         # Calls the multiplication method from the Operation module to perform the multiplication.
         return Operation.power(self.a, self.b) # pragma: no cover
+
+
+@CalculationFactory.register_calculation('modulus')
+class ModulusCalculation(Calculation):
+    """
+    ModulusCalculation represents a modulus operation between two numbers.
+
+    The modulus operation returns the remainder after dividing the first number by the second number.
+    """
+
+    def execute(self) -> float:
+        # Calls the modulus method from the Operation class.
+        return Operation.modulus(self.a, self.b)  # pragma: no cover

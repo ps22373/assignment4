@@ -45,3 +45,14 @@ class Operation:
         Raises a base number to the specified exponent and returns the results
         """
         return base ** exponent
+    
+
+    @staticmethod
+    def modulus(a: float, b: float) -> float:
+        """
+        Returns the remainder after dividing the first number by the second.
+        """
+        if b == 0:
+            raise ValueError("Modulus by zero is not allowed.")
+
+        return a % b
