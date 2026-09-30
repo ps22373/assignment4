@@ -21,6 +21,7 @@ from app.calculation import (
     MultiplyCalculation,
     DivideCalculation,
     PowerCalculation,
+    ModulusCalculation,
     Calculation
 )
 
@@ -209,6 +210,26 @@ def test_divide_calculation_execute_negative(mock_division):
     assert str(exc_info.value) == "Division error"
 
 
+def test_divide_calculation_execute_division_by_zero():
+    """
+    Test that DivideCalculation.execute raises ZeroDivisionError when dividing by zero.
+
+    This test verifies that attempting to divide by zero using DivideCalculation
+    correctly raises a ZeroDivisionError with an appropriate error message.
+    """
+    # Arrange
+    a = 10.0
+    b = 0.0
+    divide_calc = DivideCalculation(a, b)
+
+    # Act & Assert
+    with pytest.raises(ZeroDivisionError) as exc_info:
+        divide_calc.execute()
+
+    # Verify the exception message is as expected
+    assert str(exc_info.value) == "Cannot divide by zero."
+
+
 @patch.object(Operation, 'power')
 def test_power_calculation_execute_positive(mock_power):
     """
@@ -228,24 +249,39 @@ def test_power_calculation_execute_positive(mock_power):
     mock_power.assert_called_once_with(a, b)
     assert result == expected_result
 
-def test_divide_calculation_execute_division_by_zero():
-    """
-    Test that DivideCalculation.execute raises ZeroDivisionError when dividing by zero.
 
-    This test verifies that attempting to divide by zero using DivideCalculation
-    correctly raises a ZeroDivisionError with an appropriate error message.
-    """
+@patch.object(Operation, 'modulus')
+def test_modulus_calculation_execute_positive(mock_modulus):
+    """Test ModulusCalculation.execute for a positive scenario."""
     # Arrange
     a = 10.0
-    b = 0.0
-    divide_calc = DivideCalculation(a, b)
+    b = 3.0
+    expected_result = 1.0
+    mock_modulus.return_value = expected_result
+    modulus_calc = ModulusCalculation(a, b)
+
+    # Act
+    result = modulus_calc.execute()
+
+    # Assert
+    mock_modulus.assert_called_once_with(a, b)
+    assert result == expected_result
+
+
+@patch.object(Operation, 'modulus')
+def test_modulus_calculation_execute_negative(mock_modulus):
+    """Test that ModulusCalculation propagates modulus exceptions."""
+    # Arrange
+    a = 10.0
+    b = 3.0
+    mock_modulus.side_effect = Exception("Modulus error")
+    modulus_calc = ModulusCalculation(a, b)
 
     # Act & Assert
-    with pytest.raises(ZeroDivisionError) as exc_info:
-        divide_calc.execute()
+    with pytest.raises(Exception) as exc_info:
+        modulus_calc.execute()
 
-    # Verify the exception message is as expected
-    assert str(exc_info.value) == "Cannot divide by zero."
+    assert str(exc_info.value) == "Modulus error"
 
 
 # -----------------------------------------------------------------------------------
@@ -331,6 +367,29 @@ def test_factory_creates_divide_calculation():
     assert calc.a == a
     assert calc.b == b
 
+def test_factory_creates_power_calculation():
+    """Test that the factory creates a PowerCalculation instance."""
+    a = 2.0
+    b = 3.0
+
+    calc = CalculationFactory.create_calculation('power', a, b)
+
+    assert isinstance(calc, PowerCalculation)
+    assert calc.a == a
+    assert calc.b == b
+
+
+def test_factory_creates_modulus_calculation():
+    """Test that the factory creates a ModulusCalculation instance."""
+    a = 10.0
+    b = 3.0
+
+    calc = CalculationFactory.create_calculation('modulus', a, b)
+
+    assert isinstance(calc, ModulusCalculation)
+    assert calc.a == a
+    assert calc.b == b
+
 
 def test_factory_create_unsupported_calculation():
     """
@@ -342,7 +401,7 @@ def test_factory_create_unsupported_calculation():
     # Arrange
     a = 10.0
     b = 5.0
-    unsupported_type = 'modulus'  # An unsupported calculation type
+    unsupported_type = 'square_root'  # An unsupported calculation type
 
     # Act & Assert
     with pytest.raises(ValueError) as exc_info:
@@ -517,13 +576,16 @@ def test_calculation_repr_representation_division():
     ('multiply', 10.0, 5.0, 50.0),
     ('divide', 10.0, 5.0, 2.0),
     ('power', 2.0, 3.0, 8.0),
+    ('modulus', 10.0, 3.0, 1.0),
 ])
 @patch.object(Operation, 'addition')
 @patch.object(Operation, 'subtraction')
 @patch.object(Operation, 'multiplication')
 @patch.object(Operation, 'division')
+@patch.object(Operation, 'power')
+@patch.object(Operation, 'modulus')
 def test_calculation_execute_parameterized(
-    mock_division, mock_multiplication, mock_subtraction, mock_addition,
+    mock_modulus, mock_power, mock_division, mock_multiplication, mock_subtraction, mock_addition,
     calc_type, a, b, expected_result
 ):
     """
@@ -541,6 +603,10 @@ def test_calculation_execute_parameterized(
         mock_multiplication.return_value = expected_result
     elif calc_type == 'divide':
         mock_division.return_value = expected_result
+    elif calc_type == 'power':
+        mock_power.return_value = expected_result
+    elif calc_type == 'modulus':
+        mock_modulus.return_value = expected_result
 
     # Act: Create calculation instance and execute
     calc = CalculationFactory.create_calculation(calc_type, a, b)
@@ -555,6 +621,10 @@ def test_calculation_execute_parameterized(
         mock_multiplication.assert_called_once_with(a, b)
     elif calc_type == 'divide':
         mock_division.assert_called_once_with(a, b)
+    elif calc_type == 'power':
+        mock_power.assert_called_once_with(a, b)
+    elif calc_type == 'modulus':
+        mock_modulus.assert_called_once_with(a, b)
 
     assert result == expected_result
 
@@ -568,13 +638,17 @@ def test_calculation_execute_parameterized(
     ('subtract', 10.0, 5.0, "SubtractCalculation: 10.0 Subtract 5.0 = 5.0"),
     ('multiply', 10.0, 5.0, "MultiplyCalculation: 10.0 Multiply 5.0 = 50.0"),
     ('divide', 10.0, 5.0, "DivideCalculation: 10.0 Divide 5.0 = 2.0"),
+    ('power', 2.0, 3.0, "PowerCalculation: 2.0 Power 3.0 = 8.0"),
+    ('modulus', 10.0, 3.0, "ModulusCalculation: 10.0 Modulus 3.0 = 1.0"),
 ])
 @patch.object(Operation, 'addition', return_value=15.0)
 @patch.object(Operation, 'subtraction', return_value=5.0)
 @patch.object(Operation, 'multiplication', return_value=50.0)
 @patch.object(Operation, 'division', return_value=2.0)
+@patch.object(Operation, 'power', return_value=8.0)
+@patch.object(Operation, 'modulus', return_value=1.0)
 def test_calculation_str_parameterized(
-    mock_division, mock_multiplication, mock_subtraction, mock_addition,
+    mock_modulus, mock_power, mock_division, mock_multiplication, mock_subtraction, mock_addition,
     calc_type, a, b, expected_str
 ):
     """

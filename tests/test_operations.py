@@ -346,6 +346,8 @@ def test_division_with_zero_numerator():
     (Operation.subtraction, 10.0, '5', TypeError),
     (Operation.multiplication, '10', '5', TypeError),
     (Operation.division, 10.0, '5', TypeError),
+    (Operation.power, '10', 2.0, TypeError),
+    (Operation.modulus, 10.0, '5', TypeError),
 ])
 def test_operations_invalid_input_types(calc_method, a, b, expected_exception):
     """
@@ -367,7 +369,7 @@ def test_operations_invalid_input_types(calc_method, a, b, expected_exception):
 
 def test_power_positive():
     """
-    Test the multiplication method with two positive numbers.
+    Test the power method with two positive numbers.
     
     This test verifies that raising a positive number to a positive power returns the correct result.
     """
@@ -455,3 +457,93 @@ def test_power_with_zero_base():
 
     # Assert
     assert result == expected_result, (f"Expected {a} ** {b} to be {expected_result}, got {result}")
+
+
+# -----------------------------------------------------------------------------------
+# Test Modulus Method
+# -----------------------------------------------------------------------------------
+
+def test_modulus_positive():
+    """
+    Test the modulus method with two positive numbers.
+
+    This test verifies that the modulus operation returns the remainder after dividing one positive number by another.
+    """
+    # Arrange
+    a = 10.0
+    b = 3.0
+    expected_result = 1.0
+
+    # Act
+    result = Operation.modulus(a, b)
+
+    # Assert
+    assert result == expected_result, (f"Expected {a} % {b} to be {expected_result}, got {result}")
+
+
+def test_modulus_negative_numbers():
+    """
+    Test the modulus method with two negative numbers.
+
+    This test verifies that the modulus operation handles negative operands correctly.
+    """
+    # Arrange
+    a = -10.0
+    b = -3.0
+    expected_result = -1.0
+
+    # Act
+    result = Operation.modulus(a, b)
+
+    # Assert
+    assert result == expected_result, (f"Expected {a} % {b} to be {expected_result}, got {result}")
+
+
+def test_modulus_with_zero_numerator():
+    """
+    Test the modulus method with zero as the numerator.
+
+    This test verifies that zero modulo a non-zero number returns zero.
+    """
+    # Arrange
+    a = 0.0
+    b = 5.0
+    expected_result = 0.0
+
+    # Act
+    result = Operation.modulus(a, b)
+
+    # Assert
+    assert result == expected_result, (f"Expected {a} % {b} to be {expected_result}, got {result}")
+
+
+def test_modulus_with_zero_divisor():
+    """
+    Test that the modulus method raises ValueError when the divisor is zero.
+    """
+    # Arrange
+    a = 10.0
+    b = 0.0
+
+    # Act & Assert
+    with pytest.raises(ValueError) as exc_info:
+        Operation.modulus(a, b)
+
+    # Verify that the exception message is as expected
+    assert str(exc_info.value) == "Modulus by zero is not allowed."
+
+
+def test_modulus_with_negative_divisor():
+    """
+    Test the modulus method with a positive numerator and negative divisor.
+    """
+    # Arrange
+    a = 10.0
+    b = -3.0
+    expected_result = -2.0
+
+    # Act
+    result = Operation.modulus(a, b)
+
+    # Assert
+    assert result == expected_result, (f"Expected {a} % {b} to be {expected_result}, got {result}")
